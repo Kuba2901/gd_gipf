@@ -54,7 +54,7 @@ void Engine::processCommands() {
     std::string line;
 
     while (getline(std::cin, line)) {
-        if (line.compare("LOAD_GAME_BOARD") == 1) {
+        if (line.compare("LOAD_GAME_BOARD") == 1 || line == "LOAD_GAME_BOARD") {
             LOAD_GAME_BOARD();
         } 
         else if (line.compare("PRINT_GAME_BOARD") == 1 || line == "PRINT_GAME_BOARD") {

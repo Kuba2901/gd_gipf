@@ -159,7 +159,7 @@ int GameRules::checkBoardState(std::vector<std::vector<Point *>> boardPieces) {
         return 0;
     }
     else {
-        std::cout << "BOARD_STATE_OK\n" << std::endl;
+        std::cout << "BOARD_STATE_OK" << std::endl;
         this->mapCorrect = true;
         return 0;
     }

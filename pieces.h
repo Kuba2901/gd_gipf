@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <algorithm>
 #include "engine.h"
 #include "mapPoint.h"
 #include "Point.h"
@@ -143,6 +144,10 @@ class BoardPieces {
         void makePreciseMove(std::string begin, std::string dest) {}
 
         virtual bool detectMovementErrors(std::string begin, std::string dest);
+
+        virtual int trimBackWhitespaces(int y);
+
+        virtual int findRowEnd(std::vector<Point *> row);
 
         ~BoardPieces() {}
 

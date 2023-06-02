@@ -31,43 +31,48 @@ void BoardPieces::scanBoard() {
     std::string line;
 
     // Get board dimensions
-    int height = 1; //2*(S-1);
+    int height = 2*(S); //2*(S-1);
     int width = 3*(S-1); // 3*(S-1);
 
-    int y = 0;
-
-    while (getline(std::cin, line)) {
+    for (int y = 0; y < height; y++) {
         std::vector<Point*> row;
 
-        // printf("LINE: %s", line.c_str());
+        // Get current line
+        getline(std::cin, line);
 
-        if (!line.empty() && line.length() > 1) {
-            for (size_t x = 0; x < line.length(); x++)
-            {
+        if (!line.empty() && line[0] != '\r') {
+            for (int x = 0; x < line.length(); ++x) {
                 // Adding +1 for later '+'
-                row.push_back(new Point(x, y+1, line[x]));
+                row.push_back(new Point(x, y + 1, line[x]));
             }
 
-            // Add an extra ' ' to the end of the line
-            row.insert(row.end() - 1, new Point(0, y+1, ' '));;
             boardPieces.push_back(row);
-            y++;
-        } 
-
-
-        // Detect input end
-        if (line.length() == 1 && y > 1) {
-            break;
         }
     }
 
     // Copy the original board to a different structure
     this->originalBoard = boardPieces;
 
-    if (boardPieces.size() > 0) {
-        addFreeFields(S);
-        reindexFields(S);
+//    addFreeFields(S);
+//    printBoard();
+//    reindexFields(S);
+
+}
+
+int BoardPieces::trimBackWhitespaces(int y) {
+    int iter = 0;
+
+    for (int i = boardPieces[y].size() - 1; i > 0 ; --i) {
+        Point *curr = boardPieces[y][i];
+
+        if (curr->c != ' ' && curr->c != '\r') {
+            return iter;
+        }
+
+        iter++;
     }
+
+    return NULL;
 }
 
 void BoardPieces::removeEmpty() {
@@ -129,25 +134,25 @@ void BoardPieces::addFreeFields(int S) {
         }
 
         // Push '+' sign to the end
-        // boardPieces[y].insert(boardPieces[y].end() - 1, new Point(boardPieces[y].size() - 2, y, ' '));
-        boardPieces[y].insert(boardPieces[y].end() - 1, new Point(boardPieces[y].size() - 2, y, '+'));
+        boardPieces[y].insert(boardPieces[y].end() - findRowEnd(boardPieces[y]), new Point(boardPieces[y].size() - 2, y, ' '));
+        boardPieces[y].insert(boardPieces[y].end() - findRowEnd(boardPieces[y]) + 1, new Point(boardPieces[y].size() - 2, y, '+'));
     }
 
     // Iterate over the top
-    for (size_t x = 0; x < boardPieces[0].size() - 2; x++)
+    for (size_t x = 0; x < boardPieces[0].size() - 1; x++)
     {
-        if (boardPieces[0][x + 1]->c != ' ' && x >= S) {
+        if (boardPieces[0][x + 1]->c != ' ' && boardPieces[0][x + 1]->c != '\r' && x >= S) {
             top.push_back(new Point(x, 0, '+'));
         } else {
             top.push_back(new Point(x, 0, ' '));
         }
     }
 
-    
+
     // Iterate over the bottom
-    for (size_t x = 0; x < boardPieces[boardPieces.size() - 1].size() - 2; x++)
+    for (size_t x = 0; x < boardPieces[boardPieces.size() - 1].size() - 1; x++)
     {
-        if (boardPieces[boardPieces.size() - 1][x + 1]->c != ' ' && x >= S) {
+        if (boardPieces[boardPieces.size() - 1][x + 1]->c != ' ' && boardPieces[boardPieces.size() - 1][x + 1]->c != '\r' && x >= S) {
             bottom.push_back(new Point(x, boardPieces.size() + 1, '+'));
         } else {
             bottom.push_back(new Point(x ,boardPieces.size() + 1, ' '));
@@ -160,6 +165,20 @@ void BoardPieces::addFreeFields(int S) {
 
     // Repair indexes
     shiftIndexes();
+}
+
+int BoardPieces::findRowEnd(std::vector<Point *> row) {
+    int iter = 0;
+
+    for (int i = row.size() - 1; i >= 0; i--) {
+        if (row[i]->c != ' ' && row[i]->c != '\r') {
+            return iter;
+        }
+
+        iter++;
+    }
+
+    return iter;
 }
 
 // Shift indexes while inserting '+' signs
@@ -881,16 +900,21 @@ void BoardPieces::diagonalCaptures() {
 }
 
 int BoardPieces::findFirstDiagonalIndex(int y) {
-    for (size_t x = 0; x < boardPieces[y].size(); x++)
-    {
-        Point *curr = boardPieces[y][x];
+    if (!boardPieces.empty() && boardPieces[y].empty()) {
+        for (size_t x = 0; x < boardPieces[y].size(); x++)
+        {
+            Point *curr = boardPieces[y][x];
+            if (curr == nullptr) {
+                printf("NULLPTR\n");
+            }
 
-        if (curr->c == '+') {
-            return x+1;
+            if (curr->c == '+') {
+                return x+1;
+            }
         }
     }
 
-    return NULL;
+    return 100000;
 }
 
 int BoardPieces::findLastDiagonalIndex(int y) {
@@ -903,7 +927,7 @@ int BoardPieces::findLastDiagonalIndex(int y) {
         }
     }
 
-    return NULL;
+    return -10;
 
 }
 
@@ -1127,7 +1151,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
     }
 
     // Assign the first element as current players piece
-    tempRow[0]->c = engine->getCurrentlyMoving();
+    if (tempRowLen > 0) tempRow[0]->c = engine->getCurrentlyMoving();
 
     // Decrement remaining pieces
     decrementRemaining();
@@ -1299,59 +1323,61 @@ int BoardPieces::findKElementsReverseDiagonal() {
     // Vector of ignored points
     std::vector<Point *> ignoredPoints;
 
-    // Iterate over the board
-    for (size_t y = 1; y < height - 1; y++)
-    {
-        for (int x = findLastDiagonalIndex(y) - 1; x >= 0; x--)
+    if (height > 0) {
+        // Iterate over the board
+        for (size_t y = 1; y < height - 1; y++)
         {
-            // Break if an x was encountered
-            if (boardPieces[y][x]->c == '+') break;
+            for (int x = findLastDiagonalIndex(y) - 1; x >= 0; x--)
+            {
+                // Break if an x was encountered
+                if (boardPieces[y][x]->c == '+') break;
 
-            // Ignore spaces
-            if (boardPieces[y][x]->c == ' ') continue;
+                // Ignore spaces
+                if (boardPieces[y][x]->c == ' ') continue;
 
-            // Define diagonal iterators
-            int diagX = x;
-            int diagY = y;
+                // Define diagonal iterators
+                int diagX = x;
+                int diagY = y;
 
-            // Iterate while in bounds
-            while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
-                // Get the current point
-                Point *curr = boardPieces[diagY][diagX];
+                // Iterate while in bounds
+                while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
+                    // Get the current point
+                    Point *curr = boardPieces[diagY][diagX];
 
-                // Break if the current point has already been marked
-                if (pointIgnored(curr, ignoredPoints)) {
-                    break;
+                    // Break if the current point has already been marked
+                    if (pointIgnored(curr, ignoredPoints)) {
+                        break;
+                    }
+
+                    if (curr->c == 'B') {
+                        blackInRow++;
+                        whiteInRow = 0;
+                    }
+                    else if (curr->c == 'W') {
+                        whiteInRow++;
+                        blackInRow = 0;
+                    }
+                    else if (curr->c == '_') {
+                        blackInRow = 0;
+                        whiteInRow = 0;
+                    }
+
+                    // Check state
+                    if (blackInRow == K || whiteInRow == K) {
+                        // Add final point to ignored
+                        ignoredPoints.push_back(curr);
+                    }
+
+                    // Move down-left
+                    diagX--;
+                    diagY++;
                 }
 
-                if (curr->c == 'B') {
-                    blackInRow++;
-                    whiteInRow = 0;
-                }
-                else if (curr->c == 'W') {
-                    whiteInRow++;
-                    blackInRow = 0;
-                }
-                else if (curr->c == '_') {
-                    blackInRow = 0;
-                    whiteInRow = 0;
-                }
-
-                // Check state
-                if (blackInRow == K || whiteInRow == K) {
-                    // Add final point to ignored
-                    ignoredPoints.push_back(curr);
-                }
-
-                // Move down-left
-                diagX--;
-                diagY++;
+                whiteInRow = 0;
+                blackInRow = 0;
             }
 
-            whiteInRow = 0;
-            blackInRow = 0;
         }
-        
     }
     
     return ignoredPoints.size();
@@ -1370,54 +1396,56 @@ int BoardPieces::findKElementsDiagonal() {
     // Ignored points vector
     std::vector<Point *> ignoredPoints;
 
-    // Iterate over the board
-    for (size_t y = 1; y < boardPieces.size() - 1; y++) {
-        // Find the first index
-        for (size_t x = findFirstDiagonalIndex(y); x < boardPieces[y].size() - 1; x++)
-        {
-            // Ignore spaces
-            if (boardPieces[y][x]->c == ' ') continue;
+    if (height > 0) {
+        // Iterate over the board
+        for (size_t y = 1; y < boardPieces.size() - 1; y++) {
+            // Find the first index
+            for (size_t x = findFirstDiagonalIndex(y); x < boardPieces[y].size() - 1; x++)
+            {
+                // Ignore spaces
+                if (boardPieces[y][x]->c == ' ') continue;
 
-            // Define diagonal iterators
-            int diagX = x;
-            int diagY = y;
+                // Define diagonal iterators
+                int diagX = x;
+                int diagY = y;
 
-            // Iterate while in bounds
-            while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
-                // Get the current point
-                Point *curr = boardPieces[diagY][diagX];
+                // Iterate while in bounds
+                while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
+                    // Get the current point
+                    Point *curr = boardPieces[diagY][diagX];
 
-                // Break if the current point has already been marked
-                if (pointIgnored(curr, ignoredPoints)) {
-                    break;
+                    // Break if the current point has already been marked
+                    if (pointIgnored(curr, ignoredPoints)) {
+                        break;
+                    }
+
+                    if (curr->c == 'B') {
+                        blackInRow++;
+                        whiteInRow = 0;
+                    }
+                    else if (curr->c == 'W') {
+                        whiteInRow++;
+                        blackInRow = 0;
+                    }
+                    else if (curr->c == '_') {
+                        blackInRow = 0;
+                        whiteInRow = 0;
+                    }
+
+                    // Check state
+                    if (blackInRow == K || whiteInRow == K) {
+                        // Add final point to ignored
+                        ignoredPoints.push_back(curr);
+                    }
+
+                    // Move down-right
+                    diagX++;
+                    diagY++;
                 }
 
-                if (curr->c == 'B') {
-                    blackInRow++;
-                    whiteInRow = 0;
-                }
-                else if (curr->c == 'W') {
-                    whiteInRow++;
-                    blackInRow = 0;
-                }
-                else if (curr->c == '_') {
-                    blackInRow = 0;
-                    whiteInRow = 0;
-                }
-
-                // Check state
-                if (blackInRow == K || whiteInRow == K) {
-                    // Add final point to ignored
-                    ignoredPoints.push_back(curr);
-                }
-
-                // Move down-right
-                diagX++;
-                diagY++;
+                whiteInRow = 0;
+                blackInRow = 0;
             }
-
-            whiteInRow = 0;
-            blackInRow = 0;
         }
     }
 
@@ -1432,47 +1460,49 @@ int BoardPieces::findKElementsFlat() {
     int height = boardPieces.size();
     int rowCount = 0;
 
-    // Find <-> this way (starting from 1 and ending at -1 because of edges)
-    for (size_t y = 0; y < height; y++)
-    {
-        // Determine row width
-        int width = boardPieces[y].size();
-
-        // Define how many pawns in a row for each player
-        int whiteInRow = 0;
-        int blackInRow = 0;
-
-        // Same here
-        for (size_t x = 0; x < width; x++)
+    if (height > 0) {
+        // Find <-> this way (starting from 1 and ending at -1 because of edges)
+        for (size_t y = 0; y < height; y++)
         {
-            // Define the current element
-            Point* curr = boardPieces[y][x];
+            // Determine row width
+            int width = boardPieces[y].size();
 
-            if (curr->c == 'W') {
-                // printf("WHITE FOUND\n");
-                whiteInRow++;
-                blackInRow = 0;
-            } 
-            else if (curr->c == 'B') {
-                // printf("BLACK FOUND\n");
-                whiteInRow = 0;
-                blackInRow++;
-            } else if (curr->c == '_') {
-                // printf("RESETING COUNTER\n");
-                blackInRow = 0;
-                whiteInRow = 0;
-            }
+            // Define how many pawns in a row for each player
+            int whiteInRow = 0;
+            int blackInRow = 0;
 
-            // Check status (TODO: Change from 4 to K)
-            if (whiteInRow == K || blackInRow == K) {
-                // printf("FOUND FLAT K\n");
-                // printf("(%d, %d)\n", x, y);
-                rowCount++;
+            // Same here
+            for (size_t x = 0; x < width; x++)
+            {
+                // Define the current element
+                Point* curr = boardPieces[y][x];
 
-                whiteInRow = 0;
-                blackInRow = 0;
+                if (curr->c == 'W') {
+                    // printf("WHITE FOUND\n");
+                    whiteInRow++;
+                    blackInRow = 0;
+                }
+                else if (curr->c == 'B') {
+                    // printf("BLACK FOUND\n");
+                    whiteInRow = 0;
+                    blackInRow++;
+                } else if (curr->c == '_') {
+                    // printf("RESETING COUNTER\n");
+                    blackInRow = 0;
+                    whiteInRow = 0;
+                }
 
-                break;
+                // Check status (TODO: Change from 4 to K)
+                if (whiteInRow == K || blackInRow == K) {
+                    // printf("FOUND FLAT K\n");
+                    // printf("(%d, %d)\n", x, y);
+                    rowCount++;
+
+                    whiteInRow = 0;
+                    blackInRow = 0;
+
+                    break;
+                }
             }
         }
     }
