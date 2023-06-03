@@ -75,7 +75,7 @@ void Engine::DO_MOVE(std::string args) {
     std::getline(ss, to);
 
     // Remove endline
-    to.erase(to.length() - 1);
+    //to.erase(to.length() - 1);
 
     // Make the move
     this->board->makeMove(from, to);
