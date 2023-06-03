@@ -16,6 +16,7 @@ void Engine::LOAD_GAME_BOARD() {
     this->board->clearData();
     this->gameRules->clearData();
 
+
     // Load rules values
     this->gameRules->loadRules();
 
@@ -54,7 +55,9 @@ void Engine::processCommands() {
     std::string line;
 
     while (getline(std::cin, line)) {
-        if (line.compare("LOAD_GAME_BOARD") == 1) {
+        printf("PROCESS LINE: %s\n", line.c_str());
+        if (line.compare("LOAD_GAME_BOARD") == 1 || line == "LOAD_GAME_BOARD") {
+            printf("ENTERING LOAD!\n");
             LOAD_GAME_BOARD();
         } 
         else if (line.compare("PRINT_GAME_BOARD") == 1 || line == "PRINT_GAME_BOARD") {
@@ -62,6 +65,9 @@ void Engine::processCommands() {
         } 
         else if (line.find("DO_MOVE") != std::string::npos) {
             DO_MOVE(line);
+        }
+        else {
+            printf("UNKNOWN!\n");
         }
     }
 }

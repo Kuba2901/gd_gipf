@@ -16,7 +16,11 @@ void GameRules::clearData() {
 }
 
 void GameRules::loadRules() {
-    int S_, K_, GW_, GB_;
+    std::string line;
+    
+    //while (getline(std::, line)) printf("RULES LINE: %s\n", line.c_str());
+
+    int S_ = 0, K_ = 0, GW_ = 0, GB_ = 0;
     std::cin >> S_ >> K_ >> GW_ >> GB_;
     // printf("S: %d, K: %d, GW: %d, Gb: %d\n", S_, K_, GW_, GB_);
 

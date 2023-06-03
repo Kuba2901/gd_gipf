@@ -25,13 +25,15 @@ std::vector<std::vector<Point*>> BoardPieces::getBoard() {
 }
 
 void BoardPieces::scanBoard() {
+    printf("EXECUTING SCAN\n");
+
     int S = engine->getRules()->getS();
 
     // Create line buffer
     std::string line;
 
     // Get board dimensions
-    int height = 1; //2*(S-1);
+    int height = 2*S; //2*(S-1);
     int width = 3*(S-1); // 3*(S-1);
 
     int y = 0;
@@ -39,7 +41,7 @@ void BoardPieces::scanBoard() {
     while (getline(std::cin, line)) {
         std::vector<Point*> row;
 
-        // printf("LINE: %s", line.c_str());
+         printf("LINE: %s", line.c_str());
 
         if (!line.empty() && line.length() > 1) {
             for (size_t x = 0; x < line.length(); x++)
