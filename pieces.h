@@ -124,7 +124,7 @@ class BoardPieces {
         void pushDiagonal(bool reverse, bool top, std::string key);
 
         virtual void printPointLocation(std::string key);
-
+         
         // Decrement player pieces remaining after a move
         virtual void decrementRemaining();
 
@@ -157,10 +157,13 @@ class BoardPieces {
         virtual void setBoard(std::vector<std::vector<Point*>> board_);
 
         // RETURNS: 0 - good; 1 - wrong color; 2 - wrong index
-        virtual int verifyDiagonals(bool reverse, std::string key1, std::string key2, char color);
+        virtual int verifyDiagonals(int direction, std::string key1, std::string key2, char color);
 
         // RETURNS: 0 - good; 1 - wrong color; 2 - wrong index
         virtual int verifyFlat(std::string key1, std::string key2, char color);
+        
+        // RETURNS: 0 - right, 1 - left, 2 - top-right, 3 - bottom-right, 4 - top-left, 5 - bottom-left
+        virtual int findPreciseDirection(std::string key1, std::string key2);
 
         ~BoardPieces() {}
 

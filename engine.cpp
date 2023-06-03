@@ -11,6 +11,8 @@ Engine::Engine() {
     processCommands();
 
     this->testingMoves = false;
+
+    this->errorEncountered = false;
 }
 
 void Engine::LOAD_GAME_BOARD() {
@@ -63,6 +65,9 @@ void Engine::processCommands() {
 }
 
 void Engine::DO_MOVE(std::string args) {
+    // Reset error state
+    this->errorEncountered = false;
+
     // Find DO_MOVE
     size_t movePos = args.find("DO_MOVE");
 
@@ -93,6 +98,8 @@ void Engine::DO_MOVE(std::string args) {
     }
 
     if (tokens.size() > 2) {
+        //printf("STARTING TESTING");
+
         // Start testing state
         this->testingMoves = true;
 
@@ -113,29 +120,42 @@ void Engine::DO_MOVE(std::string args) {
         // Define code
         int moveCode = -1;
 
-        // 3a. Check flat
-        moveCode = this->board->verifyFlat(firstIndex, secondIndex, color);
+        // Get movement direction
+        int direction = board->findPreciseDirection(firstIndex, secondIndex);
 
-        // The move was successful
-        if (moveCode == 0) {
-            this->board->findFlatlineCaptures();
+        // Default error on no direction found
+        if (direction == -1) moveCode = 1;
+
+        // 3a. Check flat
+        if (direction == 0 || direction == 1) {
+            moveCode = this->board->verifyFlat(firstIndex, secondIndex, color);
+
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->findFlatlineCaptures();
+            }
         }
 
         // 3b. Check reverse diagonal 
-        if (moveCode == -1) moveCode = this->board->verifyDiagonals(true, firstIndex, secondIndex, color);
+        if (direction == 2 || direction == 5) { 
+            if (moveCode == -1) moveCode = this->board->verifyDiagonals(direction, firstIndex, secondIndex, color);
         
-        // The move was successful
-        if (moveCode == 0) {
-            this->board->reverseDiagonalCaptures();
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->reverseDiagonalCaptures();
+            }
         }
         
 
         // 3c. Check diagonal
-        moveCode = this->board->verifyDiagonals(false, firstIndex, secondIndex, color);
+        if (direction == 3 || direction == 4) {
+            moveCode = this->board->verifyDiagonals(direction, firstIndex, secondIndex, color);
 
-        // The move was successful
-        if (moveCode == 0) {
-            this->board->diagonalCaptures();
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->diagonalCaptures();
+            }
+
         }
 
         // Revert board changes in case of error
@@ -152,7 +172,7 @@ void Engine::DO_MOVE(std::string args) {
             printf("WRONG_INDEX_OF_CHOSEN_ROW\n");
 
         // Print success if no error encountered
-        if (moveCode == 0) printf("MOVE_COMMITED\n");
+        if (moveCode == 0) printf("MOVE_COMMITTED\n");
 
         // End testing
         this->testingMoves = false;
@@ -163,19 +183,22 @@ void Engine::DO_MOVE(std::string args) {
 
         // Classic execution
         // Make the move
-        int succes = this->board->makeMove(from, to);
+        int success = this->board->makeMove(from, to);
 
         // Indicate success
-        if (!testingMoves && succes != -1) printf("MOVE_COMMITTED\n");
+        //if (!testingMoves && succes != -1) 
+        if (success != -1 && !errorEncountered) printf("MOVE_COMMITTED\n");
 
         printf("\n");
 
-        // Check captures
+        // Check captures 
         getAllCaptures();
     }
 
     // Change currently moving player
     changeCurrentlyMoving();
+
+    testingMoves = false;
 }
 
 GameRules* Engine::getRules() {
@@ -202,4 +225,12 @@ void Engine::getAllCaptures() {
     this->board->findFlatlineCaptures();
     this->board->diagonalCaptures();
     this->board->reverseDiagonalCaptures();
+}
+
+void Engine::setTesting(bool testing_) {
+    this->testingMoves = testing_;
+}
+
+void Engine::setError(bool error_) {
+    this->errorEncountered = error_;
 }

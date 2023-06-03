@@ -29,6 +29,8 @@ class Engine {
 
     // Keep track whether a test move is in progress
     bool testingMoves;
+    bool errorEncountered;
+
 
     public:
         Engine();
@@ -50,5 +52,9 @@ class Engine {
         virtual BoardPieces* getBoardPieces();
 
         virtual void getAllCaptures();
+
+        virtual void setTesting(bool testing_);
+
+        virtual void setError(bool error_);
 
 };

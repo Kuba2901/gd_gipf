@@ -505,7 +505,7 @@ int BoardPieces::determineDirection(std::string begin, std::string dest) {
     int charDelta = end->c - start->c;
 
     // 1. Flat line ->
-    if ((end->index - start->index == 1) && (end->c - start->c == 1)) {
+    if (indexDelta == charDelta) {
         // Push to the right;
         return 0;
     }
@@ -576,6 +576,8 @@ int BoardPieces::makeMove(std::string begin, std::string dest) {
         pushDiagonal(false, false, begin);
         return 5;
     }
+
+    return 10;
 }
 
 // Printing out the indexes
@@ -1112,12 +1114,12 @@ void BoardPieces::captureReverseDiagonal(int x, int y, std::vector<Point *> *vec
 
 void BoardPieces::pushFlatRow(bool right, std::string key) {
     // Get x and y values
-    Point *pt = boardMap[key];
+    Point* pt = boardMap[key];
     int x = pt->x;
     int y = pt->y;
 
     // Define a temporary row to store items to be shifted
-    std::vector<Point *> tempRow;
+    std::vector<Point*> tempRow;
 
     // Check which direction
     if (right) {
@@ -1127,7 +1129,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
         for (size_t i = x + 1; i < width; i++)
         {
             // Get the current point
-            Point *curr = boardPieces[y][i];
+            Point* curr = boardPieces[y][i];
 
             // Ignore spaces
             if (curr->c == ' ') continue;
@@ -1143,6 +1145,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
             // If the + sign was encountered, the row is full
             if (curr->c == '+') {
                 printf("BAD_MOVE_ROW_IS_FULL\n");
+                this->engine->setError(true);
 
                 // TODO: Repair
                 // Manually change player
@@ -1158,7 +1161,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
         for (int i = x - 1; i >= 0; i--)
         {
             // Get the current point
-            Point *curr = boardPieces[y][i];
+            Point* curr = boardPieces[y][i];
 
             // Ignore spaces
             if (curr->c == ' ') continue;
@@ -1174,6 +1177,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
             // If the + sign was encountered, the row is full
             if (curr->c == '+') {
                 printf("BAD_MOVE_ROW_IS_FULL\n");
+                this->engine->setError(true);
 
                 // TODO: Repair
                 // Manually change player
@@ -1201,7 +1205,7 @@ void BoardPieces::pushFlatRow(bool right, std::string key) {
 
 void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
     // Get x and y values
-    Point *pt = boardMap[key];
+    Point* pt = boardMap[key];
 
     // Get the x and y values
     int x = pt->x;
@@ -1212,7 +1216,7 @@ void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
     if (reverse && top) {
         x++;
         y--;
-    } 
+    }
     // 2. Bottom-left
     else if (reverse && !top) {
         x--;
@@ -1233,12 +1237,12 @@ void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
     int height = boardPieces.size();
 
     // Define a vector to store points to be shifted
-    std::vector<Point *> pts;
+    std::vector<Point*> pts;
 
     // Check if in bounds
     while (y < height && x < boardPieces[y].size()) {
         // Current point on the map
-        Point *curr = boardPieces[y][x];
+        Point* curr = boardPieces[y][x];
 
         // To be sure - ignore spaces
         if (curr->c == ' ') continue;
@@ -1254,6 +1258,7 @@ void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
         // If the + sign was encountered, the row is full
         if (curr->c == '+') {
             printf("BAD_MOVE_ROW_IS_FULL\n");
+            this->engine->setError(true);
 
             // TODO: Repair
             // Manually change player
@@ -1269,20 +1274,21 @@ void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
                 // Decrement the iterators
                 y--;
                 x--;
-            } 
+            }
             // going down
             else {
                 // Increment the iterators
                 y++;
                 x++;
             }
-        } else {
+        }
+        else {
             // determine direction
             if (top) {
                 // Move top-right
                 x++;
                 y--;
-            } 
+            }
             // going down
             else {
                 // Move down-left
@@ -1609,33 +1615,38 @@ bool BoardPieces::detectMovementErrors(std::string begin, std::string dest) {
     // The first field out of bounds
     if (!entryExists(begin)) {
         printf("BAD_MOVE_%s_IS_WRONG_INDEX\n", begin.c_str());
+        this->engine->setError(true);
         return true;
     }
     //The second field is out of bounds
     if (!entryExists(dest)) {
         printf("BAD_MOVE_%s_IS_WRONG_INDEX\n", dest.c_str());
+        this->engine->setError(true);
         return true;
     }
     // The first field is not on edge
     if (!isEdge(begin)) {
         printf("BAD_MOVE_%s_IS_WRONG_STARTING_FIELD\n", begin.c_str());
+        this->engine->setError(true);
         return true;
     }
     // The second field is not adjacent
     if (!isFieldAdjacent(begin, dest)) {
         printf("UNKNOWN_MOVE_DIRECTION\n");
+        this->engine->setError(true);
         return true;
     }
     // The destination field is incorrect
     if (isEdge(dest)) {
         printf("BAD_MOVE_%s_IS_WRONG_DESTINATION_FIELD\n", dest.c_str());
+        this->engine->setError(true);
         return true;
     }
 
     return false;
 }
 
-int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key2, char color) {
+int BoardPieces::verifyDiagonals(int direction, std::string key1, std::string key2, char color) {
     // Get the other color
     char otherColor = color == 'B' ? 'W' : 'B';
 
@@ -1651,97 +1662,33 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
     int colorPieces = 0;
     int otherColorPieces = 0;
 
-    // Check whether the 2 points are on the same diagonal
-    bool sameDiagonal = false;
-
-    // Define diagonal iterators
+    // Go in the given direction
     int diagX = p1->x;
     int diagY = p1->y;
 
-    // Keep track of ignored points to avoid duplicate counts
-    std::vector<Point*> ignoredPoints;
-
-    // Iterate over the diagonal
+    // Iterate until found
     while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
-        // Get the current point
         Point* curr = boardPieces[diagY][diagX];
 
         if (curr->c == color) colorPieces++;
         if (curr->c == otherColor) otherColorPieces++;
 
+        // The end met
         if (curr->x == p2->x && curr->y == p2->y) {
-            printf("SAME DIAGONAL!\n");
-            sameDiagonal = true;
-            break;
+            if (colorPieces >= K) return 0;
+            if (otherColorPieces >= K) return 1;
+            return 2;
         }
-
-        // Move according to type of diagonal
-        if (!reverse) {
-            // Move down-right
-            diagY++;
-            diagX++;
-        }
-        else {
-            // Move top-right
-            diagY--;
-            diagX++;
-        }
-    }
-
-    // Go the other way if the points have not found each other
-    if (!sameDiagonal) {
-        // Reset counter
-        colorPieces = 0; 
-        otherColorPieces = 0;
-        diagX = p1->x;
-        diagY = p1->y;
-
-        // Iterate over the diagonal
-        while (diagY < height && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+') {
-            // Get the current point
-            Point* curr = boardPieces[diagY][diagX];
-
-            if (curr->c == color) colorPieces++;
-
-            if (curr->x == p2->x && curr->y == p2->y) {
-                printf("SAME DIAGONAL!\n");
-                sameDiagonal = true;
-                break;
-            }
-
-
-            // Move according to type of diagonal
-            if (!reverse) {
-                // Move top-left
-                diagY--;
-                diagX--;
-            }
-            else {
-                // Move down-left
-                diagY++;
-                diagX--;
-            }
-        }
-    }
-
-    // The two points are on the same diagonal
-    if (sameDiagonal) {
-        // Enough pieces were found
-        if (colorPieces >= K) return 0;
         
-        // Enough of the other color were found
-        if (otherColorPieces >= K) return 1;
-
-        // Not enough pieces of any kind were found
-        return 2;
+        // RETURNS: 0 - right, 1 - left, 2 - top-right, 3 - bottom-right, 4 - top-left, 5 - bottom-left
+        if (direction == 2) diagY--, diagX++;
+        if (direction == 3) diagY++, diagX++;
+        if (direction == 4) diagY--, diagX--;
+        if (direction == 5) diagY++, diagX--;
     }
 
-    // The two points are not on the same diagonal
-    if (!sameDiagonal) return 2;
 
-    // If no errors occured - return MOVE_COMMITED
-    return 0;
-
+    return -1;
     
 }
 
@@ -1806,4 +1753,90 @@ int BoardPieces::verifyFlat(std::string key1, std::string key2, char color) {
 
     // If no errors occured - return MOVE_COMMITED
     return 0;
+}
+
+int BoardPieces::findPreciseDirection(std::string key1, std::string key2) {
+    // Get points
+    Point* pt1 = boardMap[key1];
+    Point* pt2 = boardMap[key2];
+
+    // Find movement direction
+    // 1a. Move to the right ->
+    for (size_t x = pt1->x; x < boardPieces[pt1->y].size(); x++)
+    {
+        Point* curr = boardPieces[pt1->y][x];
+
+        if (curr->c == ' ') continue;
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 0;
+    }
+
+    // 1b. To the left <-
+    for (int x = pt1->x - 1; x >= 0; x--)
+    {
+        Point* curr = boardPieces[pt1->y][x];
+
+        if (curr->c == ' ') continue;
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 1;
+    }
+
+    // 2a. Top - right
+    int diagX = pt1->x;
+    int diagY = pt1->y;
+
+    while (diagY > 0 && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+')
+    {
+        Point* curr = boardPieces[diagY][diagX];
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 2;
+
+        diagX++;
+        diagY--;
+    }
+
+    // 2b. Bottom right
+    diagX = pt1->x;
+    diagY = pt1->y;
+
+    while (diagY < boardPieces.size() && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+')
+    {
+        Point* curr = boardPieces[diagY][diagX];
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 3;
+
+        diagX++;
+        diagY++;
+    }
+
+    // 3a. Top - left
+    diagX = pt1->x;
+    diagY = pt1->y;
+
+    while (diagY < boardPieces.size() && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+')
+    {
+        Point* curr = boardPieces[diagY][diagX];
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 4;
+
+        diagX--;
+        diagY--;
+    }
+
+    // 3a. Bottom - left
+    diagX = pt1->x;
+    diagY = pt1->y;
+
+    while (diagY < boardPieces.size() && diagX < boardPieces[diagY].size() && boardPieces[diagY][diagX]->c != '+')
+    {
+        Point* curr = boardPieces[diagY][diagX];
+
+        if (curr->x == pt2->x && curr->y == pt2->y) return 5;
+
+        diagX--;
+        diagY++;
+    }
+
+    // Nothing was found 
+    return -1;
 }
