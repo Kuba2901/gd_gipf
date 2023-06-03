@@ -27,6 +27,9 @@ class Engine {
     // Keep track of the board structure
     BoardPieces *board;
 
+    // Keep track whether a test move is in progress
+    bool testingMoves;
+
     public:
         Engine();
         

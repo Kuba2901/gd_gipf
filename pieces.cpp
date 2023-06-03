@@ -497,14 +497,12 @@ bool BoardPieces::isFieldAdjacent(std::string key1, std::string key2) {
 }
 
 int BoardPieces::determineDirection(std::string begin, std::string dest) {
-    // If any error was encountered - stop
-    if (detectMovementErrors(begin, dest)) {
-        return -1;
-    }
-
     // Determine direction if no error was encountered
     MapPoint* start = new MapPoint(begin);
     MapPoint* end = new MapPoint(dest);
+
+    int indexDelta = end->index - start->index;
+    int charDelta = end->c - start->c;
 
     // 1. Flat line ->
     if ((end->index - start->index == 1) && (end->c - start->c == 1)) {
@@ -532,10 +530,19 @@ int BoardPieces::determineDirection(std::string begin, std::string dest) {
     else if ((end->c - start->c == 1) && (end->index == start->index)) {
         return 5;
     }
+    // 7. Wrong direction
+    else {
+        return 10;
+    }
 }
 
 int BoardPieces::makeMove(std::string begin, std::string dest) {
     int direction = determineDirection(begin, dest);
+
+    // If any error was encountered - stop
+    if (detectMovementErrors(begin, dest)) {
+        return -1;
+    }
 
     // 1. Flat line ->
     if (direction == 0) {
@@ -565,7 +572,7 @@ int BoardPieces::makeMove(std::string begin, std::string dest) {
         return 4;
     }
     // 6. Diagonal bottom-right
-    else if (direction == 1) {
+    else if (direction == 5) {
         pushDiagonal(false, false, begin);
         return 5;
     }
@@ -1299,9 +1306,6 @@ void BoardPieces::pushDiagonal(bool reverse, bool top, std::string key) {
 
     // Decrement remaining pieces
     decrementRemaining();
-
-    // Indicate success
-    printf("MOVE_COMMITTED\n");
 }
 
 void BoardPieces::printPointLocation(std::string key) {
@@ -1632,6 +1636,9 @@ bool BoardPieces::detectMovementErrors(std::string begin, std::string dest) {
 }
 
 int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key2, char color) {
+    // Get the other color
+    char otherColor = color == 'B' ? 'W' : 'B';
+
     // Get board height and K
     int height = this->boardPieces.size();
     int K = this->engine->getRules()->getK();
@@ -1642,6 +1649,7 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
 
     // Count pieces of desired color
     int colorPieces = 0;
+    int otherColorPieces = 0;
 
     // Check whether the 2 points are on the same diagonal
     bool sameDiagonal = false;
@@ -1659,8 +1667,10 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
         Point* curr = boardPieces[diagY][diagX];
 
         if (curr->c == color) colorPieces++;
+        if (curr->c == otherColor) otherColorPieces++;
 
         if (curr->x == p2->x && curr->y == p2->y) {
+            printf("SAME DIAGONAL!\n");
             sameDiagonal = true;
             break;
         }
@@ -1681,7 +1691,8 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
     // Go the other way if the points have not found each other
     if (!sameDiagonal) {
         // Reset counter
-        colorPieces = 0;
+        colorPieces = 0; 
+        otherColorPieces = 0;
         diagX = p1->x;
         diagY = p1->y;
 
@@ -1693,6 +1704,7 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
             if (curr->c == color) colorPieces++;
 
             if (curr->x == p2->x && curr->y == p2->y) {
+                printf("SAME DIAGONAL!\n");
                 sameDiagonal = true;
                 break;
             }
@@ -1712,11 +1724,20 @@ int BoardPieces::verifyDiagonals(bool reverse, std::string key1, std::string key
         }
     }
 
-    // The points are not on the same diagonal - WRONG_INDEX ERROR
-    if (!sameDiagonal) return 2;
+    // The two points are on the same diagonal
+    if (sameDiagonal) {
+        // Enough pieces were found
+        if (colorPieces >= K) return 0;
+        
+        // Enough of the other color were found
+        if (otherColorPieces >= K) return 1;
 
-    // Not enough pieces were found - WRONG COLOR
-    if (colorPieces < K) return 1;
+        // Not enough pieces of any kind were found
+        return 2;
+    }
+
+    // The two points are not on the same diagonal
+    if (!sameDiagonal) return 2;
 
     // If no errors occured - return MOVE_COMMITED
     return 0;
@@ -1758,7 +1779,7 @@ int BoardPieces::verifyFlat(std::string key1, std::string key2, char color) {
     }
 
     // Go the other way if the points have not found each other
-    if (!sameLevel) {
+    if (!sameLevel || colorPieces < K) {
         // Reset counter
         colorPieces = 0;
 
