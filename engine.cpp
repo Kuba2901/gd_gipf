@@ -66,24 +66,114 @@ void Engine::DO_MOVE(std::string args) {
 
     // Get arguments
     std::string arguments = args.substr(movePos + 8);
+    
+    // Replace the - sign with ' '
+    std::replace(arguments.begin(), arguments.end(), '-', ' ');
+
+    // Create buffers
+    std::string from, to, firstIndex, secondIndex;
+    char color;
 
     // Extract the arguments
     std::stringstream ss(arguments);
 
-    std::string from, to;
-    std::getline(ss, from, '-');
-    std::getline(ss, to);
+    std::vector<std::string> tokens;
+    
+    /*std::getline(ss, from, '-');
+    std::getline(ss, to, ' ');
+    std::getline(ss, color, ':');
+    std::getline(ss, firstIndex, ' ');
+    std::getline(ss, secondIndex, ' ');*/
 
-    // Remove endline
-    //to.erase(to.length() - 1);
+    std::string token;
+    while (ss >> token) {
+        tokens.push_back(token);
+    }
 
-    // Make the move
-    this->board->makeMove(from, to);
+    if (tokens.size() > 2) {
+        // The move is precise
+        from = tokens[0], to = tokens[1];
+        color = tokens[2][0];
+        std::string firstIndex = tokens[3], secondIndex = tokens[4];
 
-    printf("\n");
+        if (color == 'b') color = 'B';
+        else color = 'W';
 
-    // Check captures
-    getAllCaptures();
+        // 1. Create a copy of the board
+        std::vector<std::vector<Point*>> boardCopy = this->board->getBoard();
+
+        // 2. Make the move on the copied board
+        int direction = this->board->makeMove(from, to);
+
+        // 2a. The move was invalid
+        if (direction == -1) return;
+
+        // 2b. The move was valid -<
+        // 3. Check whether the indexes and the color of the row is correct - otherwise (this->board->setBoard(boardCopy))
+        int moveCode = -1;
+
+        // 3a. Check flat
+        if (direction == 0 || direction == 1) {
+            moveCode = this->board->verifyFlat(firstIndex, secondIndex, color);
+            
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->findFlatlineCaptures();
+            }
+        }
+
+        // 3b. Check reverse diagonal 
+        if (direction == 2 || direction == 3) {
+            moveCode = this->board->verifyDiagonals(true, firstIndex, secondIndex, color);
+        
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->reverseDiagonalCaptures();
+            }
+        }
+
+        // 3c. Check diagonal
+        if (direction == 4 || direction == 5) {
+            moveCode = this->board->verifyDiagonals(false, firstIndex, secondIndex, color);
+
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->diagonalCaptures();
+            }
+        }
+
+        // Revert board changes in case of error
+        if (moveCode) this->board->setBoard(boardCopy);
+
+        // Get all other possible captures
+        getAllCaptures();
+
+        // Print possible errors
+        if (moveCode == 1)
+            printf("WRONG_COLOR_OF_CHOSEN_ROW\n");
+
+        else if (moveCode == 2)
+            printf("WRONG_INDEX_OF_CHOSEN_ROW\n");
+
+        // Print success if no error encountered
+        if (moveCode == 0) printf("MOVE_COMMITED\n");
+    }
+    else {
+        // The move is not precise
+        from = tokens[0], to = tokens[1];
+
+        // Classic execution
+        // Make the move
+        int succes = this->board->makeMove(from, to);
+
+        // Indicate success
+        if (succes != -1) printf("MOVE_COMMITTED\n");
+
+        printf("\n");
+
+        // Check captures
+        getAllCaptures();
+    }
 
     // Change currently moving player
     changeCurrentlyMoving();
@@ -113,5 +203,4 @@ void Engine::getAllCaptures() {
     this->board->findFlatlineCaptures();
     this->board->diagonalCaptures();
     this->board->reverseDiagonalCaptures();
-
 }

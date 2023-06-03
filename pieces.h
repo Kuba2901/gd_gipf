@@ -75,7 +75,9 @@ class BoardPieces {
         // Check whether the destination is adjacent to the starting field
         virtual bool isFieldAdjacent(std::string key1, std::string key2);
 
-        virtual void makeMove( std::string begin, std::string dest);
+        virtual int makeMove( std::string begin, std::string dest);
+
+        virtual int determineDirection(std::string begin, std::string dest);
 
         // Printing out the indexes
         virtual void printIndexes();
@@ -149,6 +151,16 @@ class BoardPieces {
         virtual int trimBackWhitespaces(int y);
 
         virtual int findRowEnd(std::vector<Point *> row);
+
+
+        // PRECISE MOVEMENT RELATED
+        virtual void setBoard(std::vector<std::vector<Point*>> board_);
+
+        // RETURNS: 0 - good; 1 - wrong color; 2 - wrong index
+        virtual int verifyDiagonals(bool reverse, std::string key1, std::string key2, char color);
+
+        // RETURNS: 0 - good; 1 - wrong color; 2 - wrong index
+        virtual int verifyFlat(std::string key1, std::string key2, char color);
 
         ~BoardPieces() {}
 

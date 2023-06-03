@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include "pieces.h"
 #include "rules.h"
 #include "Point.h"
