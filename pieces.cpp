@@ -40,6 +40,8 @@ void BoardPieces::scanBoard() {
         // Get current line
         getline(std::cin, line);
 
+        printf("BOARD READING LINE: %s\n", line.c_str());
+
         if (!line.empty() && line[0] != '\r') {
             for (int x = 0; x < line.length(); ++x) {
                 // Adding +1 for later '+'
@@ -53,10 +55,10 @@ void BoardPieces::scanBoard() {
     // Copy the original board to a different structure
     this->originalBoard = boardPieces;
 
-//    addFreeFields(S);
-//    printBoard();
-//    reindexFields(S);
-
+    if (boardPieces.size() > 0) {
+        addFreeFields(S);
+        reindexFields(S);
+    }
 }
 
 int BoardPieces::trimBackWhitespaces(int y) {
@@ -138,30 +140,32 @@ void BoardPieces::addFreeFields(int S) {
         boardPieces[y].insert(boardPieces[y].end() - findRowEnd(boardPieces[y]) + 1, new Point(boardPieces[y].size() - 2, y, '+'));
     }
 
-    // Iterate over the top
-    for (size_t x = 0; x < boardPieces[0].size() - 1; x++)
-    {
-        if (boardPieces[0][x + 1]->c != ' ' && boardPieces[0][x + 1]->c != '\r' && x >= S) {
-            top.push_back(new Point(x, 0, '+'));
-        } else {
-            top.push_back(new Point(x, 0, ' '));
+    if (boardPieces.size() > 0) {
+        // Iterate over the top
+        for (size_t x = 0; x < boardPieces[0].size() - 1; x++)
+        {
+            if (boardPieces[0][x + 1]->c != ' ' && boardPieces[0][x + 1]->c != '\r' && x >= S) {
+                top.push_back(new Point(x, 0, '+'));
+            } else {
+                top.push_back(new Point(x, 0, ' '));
+            }
         }
-    }
 
 
-    // Iterate over the bottom
-    for (size_t x = 0; x < boardPieces[boardPieces.size() - 1].size() - 1; x++)
-    {
-        if (boardPieces[boardPieces.size() - 1][x + 1]->c != ' ' && boardPieces[boardPieces.size() - 1][x + 1]->c != '\r' && x >= S) {
-            bottom.push_back(new Point(x, boardPieces.size() + 1, '+'));
-        } else {
-            bottom.push_back(new Point(x ,boardPieces.size() + 1, ' '));
+        // Iterate over the bottom
+        for (size_t x = 0; x < boardPieces[boardPieces.size() - 1].size() - 1; x++)
+        {
+            if (boardPieces[boardPieces.size() - 1][x + 1]->c != ' ' && boardPieces[boardPieces.size() - 1][x + 1]->c != '\r' && x >= S) {
+                bottom.push_back(new Point(x, boardPieces.size() + 1, '+'));
+            } else {
+                bottom.push_back(new Point(x ,boardPieces.size() + 1, ' '));
+            }
         }
-    }
 
-    // Push rows to the board
-    boardPieces.insert(boardPieces.begin(), top);
-    boardPieces.push_back(bottom);
+        // Push rows to the board
+        boardPieces.insert(boardPieces.begin(), top);
+        boardPieces.push_back(bottom);
+    }
 
     // Repair indexes
     shiftIndexes();

@@ -146,7 +146,6 @@ int GameRules::checkBoardState(std::vector<std::vector<Point *>> boardPieces) {
     } 
     // Check the len' of each side TODO: 
     else if (_goal != _counter) {
-        // std::cout << "GOAL: "  << _goal << ", counter: " << _counter << std::endl;
         std::cout << "WRONG_BOARD_ROW_LENGTH\n";
         this->mapCorrect = false;
         return 3;

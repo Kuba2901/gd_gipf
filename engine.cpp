@@ -31,12 +31,6 @@ void Engine::LOAD_GAME_BOARD() {
     // Check the state of the board
     gameRules->checkBoardState(board->getBoard());
 
-    // printf("\n");
-
-    // this->board->printBoard();
-
-    // Make a test move
-    // board->makeMove("d1", "d2");
 }
 
 void Engine::PRINT_GAME_BOARD() {
@@ -57,10 +51,10 @@ void Engine::processCommands() {
         if (line.compare("LOAD_GAME_BOARD") == 1 || line == "LOAD_GAME_BOARD") {
             LOAD_GAME_BOARD();
         } 
-        else if (line.compare("PRINT_GAME_BOARD") == 1 || line == "PRINT_GAME_BOARD") {
+        if (line.compare("PRINT_GAME_BOARD") == 1 || line == "PRINT_GAME_BOARD") {
             PRINT_GAME_BOARD();
         } 
-        else if (line.find("DO_MOVE") != std::string::npos) {
+        if (line.find("DO_MOVE") != std::string::npos) {
             DO_MOVE(line);
         }
     }
