@@ -40,7 +40,7 @@ void BoardPieces::scanBoard() {
         // Get current line
         getline(std::cin, line);
 
-        printf("BOARD READING LINE: %s\n", line.c_str());
+        //printf("BOARD READING LINE: %s\n", line.c_str());
 
         if (!line.empty() && line[0] != '\r') {
             for (int x = 0; x < line.length(); ++x) {
