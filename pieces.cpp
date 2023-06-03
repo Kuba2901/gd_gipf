@@ -237,13 +237,13 @@ void BoardPieces::reindexFields(int S) {
 
                     insertToTheMap(key, curr);
 
-                    // printf("%c%d", character, index);
+                     //printf("%c%d", character, index);
                     
                     c++;
 
                 } else  {
                     // Print out the space
-                    // printf("%c", curr->c);
+                     //printf("%c", curr->c);
                 }
                 
             } 
@@ -260,17 +260,17 @@ void BoardPieces::reindexFields(int S) {
 
                     insertToTheMap(key, curr);
 
-                    // printf("%c%d", character, index);
+                     //printf("%c%d", character, index);
                     c++;
 
                 } else {
                     // Print out the space
-                    // printf("%c", curr->c);
+                     //printf("%c", curr->c);
                 }
             }
         }
 
-        // printf("\n");
+         //printf("\n");
 
         yCounter++;
         xCounter = 0;
@@ -904,13 +904,10 @@ void BoardPieces::diagonalCaptures() {
 }
 
 int BoardPieces::findFirstDiagonalIndex(int y) {
-    if (!boardPieces.empty() && boardPieces[y].empty()) {
+    if (!boardPieces.empty() && !boardPieces[y].empty()) {
         for (size_t x = 0; x < boardPieces[y].size(); x++)
         {
-            Point *curr = boardPieces[y][x];
-            if (curr == nullptr) {
-                printf("NULLPTR\n");
-            }
+            Point* curr = boardPieces[y][x];
 
             if (curr->c == '+') {
                 return x+1;
@@ -1307,8 +1304,9 @@ void BoardPieces::printValues() {
 }
 
 int BoardPieces::boardCorrect() {
+    int sum = 0;
     // Sum all rows
-    int sum = findKElementsDiagonal() + findKElementsFlat() + findKElementsReverseDiagonal();
+    sum = findKElementsDiagonal() + findKElementsFlat() + findKElementsReverseDiagonal();
     return sum;
 
 }
