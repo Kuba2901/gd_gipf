@@ -9,13 +9,16 @@ Engine::Engine() {
 
     // Start processing commands
     processCommands();
+
+    this->testingMoves = false;
+
+    this->errorEncountered = false;
 }
 
 void Engine::LOAD_GAME_BOARD() {
     // Delete previous values
     this->board->clearData();
     this->gameRules->clearData();
-
 
     // Load rules values
     this->gameRules->loadRules();
@@ -32,12 +35,6 @@ void Engine::LOAD_GAME_BOARD() {
     // Check the state of the board
     gameRules->checkBoardState(board->getBoard());
 
-    // printf("\n");
-
-    // this->board->printBoard();
-
-    // Make a test move
-    // board->makeMove("d1", "d2");
 }
 
 void Engine::PRINT_GAME_BOARD() {
@@ -55,50 +52,153 @@ void Engine::processCommands() {
     std::string line;
 
     while (getline(std::cin, line)) {
-        printf("PROCESS LINE: %s\n", line.c_str());
-        if (line.compare("LOAD_GAME_BOARD") == 1 || line == "LOAD_GAME_BOARD") {
-            printf("ENTERING LOAD!\n");
+        if (line == "LOAD_GAME_BOARD") {
             LOAD_GAME_BOARD();
         } 
-        else if (line.compare("PRINT_GAME_BOARD") == 1 || line == "PRINT_GAME_BOARD") {
+        if (line == "PRINT_GAME_BOARD") {
             PRINT_GAME_BOARD();
         } 
-        else if (line.find("DO_MOVE") != std::string::npos) {
+        if (line.find("DO_MOVE") != std::string::npos) {
             DO_MOVE(line);
-        }
-        else {
-            printf("UNKNOWN!\n");
         }
     }
 }
 
 void Engine::DO_MOVE(std::string args) {
+    // Reset error state
+    this->errorEncountered = false;
+
     // Find DO_MOVE
     size_t movePos = args.find("DO_MOVE");
 
     // Get arguments
     std::string arguments = args.substr(movePos + 8);
+    
+    // Replace the - sign with ' '
+    std::replace(arguments.begin(), arguments.end(), '-', ' ');
+
+    // Create buffers
+    std::string from, to, firstIndex, secondIndex;
+    char color;
 
     // Extract the arguments
     std::stringstream ss(arguments);
 
-    std::string from, to;
-    std::getline(ss, from, '-');
-    std::getline(ss, to);
+    std::vector<std::string> tokens;
+    
+    /*std::getline(ss, from, '-');
+    std::getline(ss, to, ' ');
+    std::getline(ss, color, ':');
+    std::getline(ss, firstIndex, ' ');
+    std::getline(ss, secondIndex, ' ');*/
 
-    // Remove endline
-    to.erase(to.length() - 1);
+    std::string token;
+    while (ss >> token) {
+        tokens.push_back(token);
+    }
 
-    // Make the move
-    this->board->makeMove(from, to);
+    if (tokens.size() > 2) {
+        //printf("STARTING TESTING");
 
-    printf("\n");
+        // Start testing state
+        this->testingMoves = true;
 
-    // Check captures
-    getAllCaptures();
+        // The move is precise
+        from = tokens[0], to = tokens[1];
+        color = tokens[2][0];
+        std::string firstIndex = tokens[3], secondIndex = tokens[4];
+
+        if (color == 'b') color = 'B';
+        else color = 'W';
+
+        // 1. Create a copy of the board
+        std::vector<std::vector<Point*>> boardCopy = this->board->getBoard();
+
+        // 2a. Make the move
+        this->board->makeMove(from, to);
+
+        // Define code
+        int moveCode = -1;
+
+        // Get movement direction
+        int direction = board->findPreciseDirection(firstIndex, secondIndex);
+
+        // Default error on no direction found
+        if (direction == -1) moveCode = 1;
+
+        // 3a. Check flat
+        if (direction == 0 || direction == 1) {
+            moveCode = this->board->verifyFlat(firstIndex, secondIndex, color);
+
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->findFlatlineCaptures();
+            }
+        }
+
+        // 3b. Check reverse diagonal 
+        if (direction == 2 || direction == 5) { 
+            if (moveCode == -1) moveCode = this->board->verifyDiagonals(direction, firstIndex, secondIndex, color);
+        
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->reverseDiagonalCaptures();
+            }
+        }
+        
+
+        // 3c. Check diagonal
+        if (direction == 3 || direction == 4) {
+            moveCode = this->board->verifyDiagonals(direction, firstIndex, secondIndex, color);
+
+            // The move was successful
+            if (moveCode == 0) {
+                this->board->diagonalCaptures();
+            }
+
+        }
+
+        // Revert board changes in case of error
+        if (moveCode) this->board->setBoard(boardCopy);
+
+        // Get all other possible captures
+        getAllCaptures();
+
+        // Print possible errors
+        if (moveCode == 1)
+            printf("WRONG_COLOR_OF_CHOSEN_ROW\n");
+
+        else if (moveCode == 2)
+            printf("WRONG_INDEX_OF_CHOSEN_ROW\n");
+
+        // Print success if no error encountered
+        if (moveCode == 0) printf("MOVE_COMMITTED\n");
+
+        // End testing
+        this->testingMoves = false;
+    }
+    else {
+        // The move is not precise
+        from = tokens[0], to = tokens[1];
+
+        // Classic execution
+        // Make the move
+        int success = this->board->makeMove(from, to);
+
+        // Indicate success
+        //if (!testingMoves && succes != -1) 
+        if (success != -1 && !errorEncountered) printf("MOVE_COMMITTED\n");
+
+        printf("\n");
+
+        // Check captures 
+        getAllCaptures();
+    }
 
     // Change currently moving player
     changeCurrentlyMoving();
+
+    testingMoves = false;
 }
 
 GameRules* Engine::getRules() {
@@ -125,5 +225,12 @@ void Engine::getAllCaptures() {
     this->board->findFlatlineCaptures();
     this->board->diagonalCaptures();
     this->board->reverseDiagonalCaptures();
+}
 
+void Engine::setTesting(bool testing_) {
+    this->testingMoves = testing_;
+}
+
+void Engine::setError(bool error_) {
+    this->errorEncountered = error_;
 }

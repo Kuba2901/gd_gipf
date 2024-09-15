@@ -1,0 +1,3 @@
+/Users/jakubnenczak/CLionProjects/GIPF/cmake-build-test_1/CMakeFiles/GIPF.dir
+/Users/jakubnenczak/CLionProjects/GIPF/cmake-build-test_1/CMakeFiles/edit_cache.dir
+/Users/jakubnenczak/CLionProjects/GIPF/cmake-build-test_1/CMakeFiles/rebuild_cache.dir

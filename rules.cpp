@@ -16,11 +16,7 @@ void GameRules::clearData() {
 }
 
 void GameRules::loadRules() {
-    std::string line;
-    
-    //while (getline(std::, line)) printf("RULES LINE: %s\n", line.c_str());
-
-    int S_ = 0, K_ = 0, GW_ = 0, GB_ = 0;
+    int S_, K_, GW_, GB_;
     std::cin >> S_ >> K_ >> GW_ >> GB_;
     // printf("S: %d, K: %d, GW: %d, Gb: %d\n", S_, K_, GW_, GB_);
 
@@ -150,7 +146,6 @@ int GameRules::checkBoardState(std::vector<std::vector<Point *>> boardPieces) {
     } 
     // Check the len' of each side TODO: 
     else if (_goal != _counter) {
-        // std::cout << "GOAL: "  << _goal << ", counter: " << _counter << std::endl;
         std::cout << "WRONG_BOARD_ROW_LENGTH\n";
         this->mapCorrect = false;
         return 3;
@@ -163,7 +158,7 @@ int GameRules::checkBoardState(std::vector<std::vector<Point *>> boardPieces) {
         return 0;
     }
     else {
-        std::cout << "BOARD_STATE_OK\n" << std::endl;
+        std::cout << "BOARD_STATE_OK" << std::endl;
         this->mapCorrect = true;
         return 0;
     }

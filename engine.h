@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <string>
+#include <algorithm>
 #include "pieces.h"
 #include "rules.h"
 #include "Point.h"
@@ -25,6 +27,11 @@ class Engine {
     // Keep track of the board structure
     BoardPieces *board;
 
+    // Keep track whether a test move is in progress
+    bool testingMoves;
+    bool errorEncountered;
+
+
     public:
         Engine();
         
@@ -45,5 +52,9 @@ class Engine {
         virtual BoardPieces* getBoardPieces();
 
         virtual void getAllCaptures();
+
+        virtual void setTesting(bool testing_);
+
+        virtual void setError(bool error_);
 
 };
